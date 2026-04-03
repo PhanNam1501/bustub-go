@@ -1,0 +1,16 @@
+package types
+
+type TypeId int
+
+const (
+	INVALID TypeId = iota
+	BOOLEAN
+	TINYINT
+	SMALLINT
+	INTEGER
+	BIGINT
+	DECIMAL
+	VARCHAR
+	TIMESTAMP
+	VECTOR
+)
