@@ -1,3 +1,3 @@
 # bustub-go
 
-This is a bustub like CMU but implemented by Golang.
+This is a bustub database implemented by Golang.
