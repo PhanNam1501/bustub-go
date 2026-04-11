@@ -17,4 +17,3 @@ const (
 	TypeIDBoolean
 	TypeIDVarchar
 )
-

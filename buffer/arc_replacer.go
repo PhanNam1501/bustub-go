@@ -19,10 +19,10 @@ import (
 // ArcReplacer is the Go counterpart of bustub::ArcReplacer.
 type ArcReplacer struct {
 	mu           sync.Mutex
-	replacerSize int32
+	replacerSize int
 	// TODO: add the internal lists and bookkeeping fields corresponding to mru_, mfu_, ghost lists, etc.
-	mruTargetSize int32
-	currSize      int32
+	mruTargetSize int
+	currSize      int
 	mru           *list.List
 	mfu           *list.List
 
@@ -41,7 +41,7 @@ type ArcReplacer struct {
 // NewArcReplacer creates a new ArcReplacer with the given maximum number of frames.
 //
 // TODO: P1 - Add full implementation as in the C++ version.
-func NewArcReplacer(numFrames int32) *ArcReplacer {
+func NewArcReplacer(numFrames int) *ArcReplacer {
 	// TODO: initialize lists to be empty and target size to 0.
 	return &ArcReplacer{
 		replacerSize:  numFrames,
@@ -161,7 +161,7 @@ func (ar *ArcReplacer) RecordAccess(frameID FrameID, pageID PageID, accessType A
 		if ar.mruGhost.Len() < ar.mfuGhost.Len() {
 			delta = ar.mfuGhost.Len() / ar.mruGhost.Len()
 		}
-		ar.mruTargetSize += int32(delta)
+		ar.mruTargetSize += delta
 		if ar.mruTargetSize > ar.replacerSize {
 			ar.mruTargetSize = ar.replacerSize
 		}
@@ -176,11 +176,11 @@ func (ar *ArcReplacer) RecordAccess(frameID FrameID, pageID PageID, accessType A
 
 	if elem, ok := ar.mfuGhostMap[pageID]; ok {
 		delta := 1
-		if ar.mfuGhost.Len() > ar.mruGhost.Len() {
+		if ar.mfuGhost.Len() < ar.mruGhost.Len() {
 			delta = ar.mruGhost.Len() / ar.mfuGhost.Len()
 		}
 
-		ar.mruTargetSize -= int32(delta)
+		ar.mruTargetSize -= delta
 		if ar.mruTargetSize < 0 {
 			ar.mruTargetSize = 0
 		}
@@ -188,12 +188,12 @@ func (ar *ArcReplacer) RecordAccess(frameID FrameID, pageID PageID, accessType A
 		ar.mfuGhost.Remove(elem)
 		delete(ar.mfuGhostMap, pageID)
 
-		e := ar.mru.PushFront(frameID)
-		ar.mruMap[frameID] = e
+		e := ar.mfu.PushFront(frameID)
+		ar.mfuMap[frameID] = e
 		return
 	}
 
-	if ar.mru.Len()+ar.mfu.Len() == int(ar.replacerSize) {
+	if ar.mru.Len()+ar.mfuGhost.Len() == int(ar.replacerSize) {
 		if ar.mruGhost.Len() > 0 {
 			last := ar.mruGhost.Back()
 			pID := last.Value.(PageID)
@@ -269,7 +269,7 @@ func (ar *ArcReplacer) Remove(frameID FrameID) {
 // Size returns the number of evictable frames tracked by the replacer.
 //
 // TODO: P1 - Return the actual size instead of 0.
-func (ar *ArcReplacer) Size() int32 {
+func (ar *ArcReplacer) Size() int {
 	ar.mu.Lock()
 	defer ar.mu.Unlock()
 	return ar.currSize
